@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title></title>
+    <link rel="stylesheet/less" type="text/css" href="../style/main.less">
+    <script src="../../node_modules/less/dist/less.min.js"></script>
+  </head>
+
+  <body>
+    <div id="app"></div>
+  </body>
+
+  <script type="text/javascript">
+    const appName = 'sddm-vuer';
+
+    const {ipcRenderer} = require('electron');
+
+    let app = null;
+
+    let themes = [];
+
+    init();
+
+    function init () {
+      initView();
+      initIPC();
+      initThemes();
+    }
+
+    function initView () {
+      app = document.querySelector('#app');
+    }
+
+    function initIPC () {
+      ipcRenderer.send(`${appName}:themes:get`);
+
+      ipcRenderer.on(`${appName}:themes:get`, (event, arg) => {
+        initThemes(arg);
+      });
+    }
+
+    function initThemes (arg) {
+      themes = arg;
+
+      themes.forEach(t => {
+        const entry = document.createElement('div');
+        entry.className = 'theme-entry';
+        app.appendChild(entry);
+
+        const label = document.createElement('div')
+        label.className = 'label';
+        label.innerHTML = t.name;
+        entry.appendChild(label);
+
+        const btn = document.createElement('div');
+        btn.classList += 'btn btn-primary';
+        btn.innerHTML = 'Preview';
+        btn.addEventListener('click', () => {
+          ipcRenderer.send(`${appName}:themes:preview`, t);
+        });
+        entry.appendChild(btn);
+      });
+    }
+  </script>
+</html>

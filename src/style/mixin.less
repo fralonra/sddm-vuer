@@ -1,0 +1,34 @@
+@import "var";
+
+/* MIXIN */
+.d-flex {
+  display: flex;
+}
+.flex-r {
+  .d-flex;
+  flex-flow: row;
+}
+.flex-c {
+  .d-flex;
+  flex-flow: column;
+}
+.flex-wrap {
+  .d-flex;
+  flex-wrap: wrap;
+}
+.jc-center {
+  justify-content: center;
+}
+.jc-between {
+  justify-content: space-between;
+}
+.fluid {
+  width: 100%;
+  height: 100%;
+}
+.shadow(@x: 0, @y: 0, @color: rgba(70, 70, 70, .8)) {
+  box-shadow: @x @y 5px 0 @color;
+}
+.transition(@sec: .3s) {
+	transition: all @sec ease-in-out;
+}
