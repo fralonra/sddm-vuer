@@ -1,7 +1,19 @@
 @import "class";
 
+* {
+	box-sizing: border-box;
+	outline: 0;
+	text-decoration: none;
+}
+
+html {
+  font-family: sans-serif, Arial, BlinkMacSystemFont, 'Helvetica Neue';
+  font-size: 100%;
+  line-height: 1.15;
+}
 body {
   background: @bg-light;
+  font-size: .9rem;
 }
 
 #app {
@@ -10,4 +22,66 @@ body {
   left: 0;
   bottom: 0;
   right: 0;
+  //width: 100%;
+  padding: .5rem 0;
+  overflow: auto;
+  >div {
+    width: 95%;
+    padding: 1rem;
+    margin: 1rem auto;
+    .border;
+  }
+}
+#paths {
+  .path-row {
+    .flex-r;
+    .jc-start;
+    .ai-start;
+    width: 90%;
+    margin: .5rem 0;
+    >label {
+      flex: 0 0 8rem;
+      margin-right: 2rem;
+    }
+    >.row {
+      flex: 1 1 auto;
+      .ai-center;
+      .input-wrapper {
+        flex: 1 0 auto;
+        padding: 0;
+        margin-right: 1rem;
+        overflow: auto;
+        .input {
+          width: 100%;
+          margin: 0;
+          border: 0;
+          font: .8rem Arial;
+        }
+      }
+    }
+  }
+  .path-entry {
+    cursor: default;
+    &.active {
+      background: @color-primary;
+    }
+  }
+}
+#themes {
+  .theme-entry {
+    .flex-r;
+    .jc-between;
+    width: 100%;
+    margin: .5rem 0;
+    .label.current {
+      font-weight: bold;
+      &:after {
+        content: "current";
+        margin-left: 1rem;
+        color: @red;
+        font-size: .75rem;
+        font-weight: normal;
+      }
+    }
+  }
 }

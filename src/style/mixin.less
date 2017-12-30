@@ -22,13 +22,33 @@
 .jc-between {
   justify-content: space-between;
 }
+.jc-start {
+  justify-content: flex-start;
+}
+.ai-center {
+  align-items: center;
+}
+.ai-start {
+  align-items: flex-start;
+}
 .fluid {
   width: 100%;
   height: 100%;
+}
+.border {
+  border: 1px solid @color-border;
+  border-radius: .25rem;
 }
 .shadow(@x: 0, @y: 0, @color: rgba(70, 70, 70, .8)) {
   box-shadow: @x @y 5px 0 @color;
 }
 .transition(@sec: .3s) {
 	transition: all @sec ease-in-out;
+}
+
+.theme-btn(@color: @color-primary) {
+  background: @color;
+  &:hover {
+    background: lighten(@color, 10%);
+  }
 }

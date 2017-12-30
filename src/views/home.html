@@ -8,7 +8,32 @@
   </head>
 
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div id="paths">
+        <div class="path-row">
+          <label for="">Config File</label>
+          <div class="row">
+            <div class="input-wrapper">
+              <div id="config" class="input"></div>
+            </div>
+            <div class="btn-group">
+              <div class="btn btn-secondary" onclick="setConfig()">Choose sddm.conf</div>
+            </div>
+          </div>
+        </div>
+        <div class="path-row">
+          <label for="">Themes Folders</label>
+          <div class="row">
+            <div id="theme" class="input-wrapper"></div>
+            <div class="btn-group">
+              <div class="btn btn-secondary" onclick="addThemePath()">Add Folder</div>
+              <div class="btn btn-warning" onclick="removeThemePath()">Remove Folder</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div id="themes"></div>
+    </div>
   </body>
 
   <script type="text/javascript">
@@ -16,8 +41,10 @@
 
     const {ipcRenderer} = require('electron');
 
-    let app = null;
+    const views = {};
 
+    let sddm = {};
+    let paths = {};
     let themes = [];
 
     init();
@@ -25,42 +52,177 @@
     function init () {
       initView();
       initIPC();
-      initThemes();
     }
 
     function initView () {
-      app = document.querySelector('#app');
+      views.app = document.querySelector('#app');
+      views.paths = document.querySelector('#paths');
+      views.themes = document.querySelector('#themes');
     }
 
     function initIPC () {
+      ipcRenderer.send(`${appName}:sddm:get`);
+      ipcRenderer.send(`${appName}:paths:get`);
       ipcRenderer.send(`${appName}:themes:get`);
 
+      ipcRenderer.on(`${appName}:sddm:get`, (event, arg) => {
+        initSddm(arg);
+      });
+      ipcRenderer.on(`${appName}:paths:get`, (event, arg) => {
+        initPaths(arg);
+      });
+      ipcRenderer.on(`${appName}:paths:set-config`, (event, arg) => {
+        initPathConfig(arg);
+      });
+      ipcRenderer.on(`${appName}:paths:add-theme`, (event, arg) => {
+        addPathTheme(arg);
+      });
       ipcRenderer.on(`${appName}:themes:get`, (event, arg) => {
         initThemes(arg);
+      });
+      ipcRenderer.on(`${appName}:themes:add`, (event, path, themes) => {
+        addThemes(path, themes);
+      });
+    }
+
+    function initSddm (arg) {
+      sddm = arg;
+    }
+
+    function initPaths (arg) {
+      paths = arg;
+      initPathConfig();
+      initPathsTheme();
+    }
+
+    function initPathConfig (arg = {}) {
+      if (arg.length > 0) paths.config = arg;
+      document.querySelector('#paths #config').innerHTML = paths.config;
+    }
+
+    function initPathsTheme (arg = {}) {
+      if (arg.length > 0) paths.theme = arg;
+      for (let i in paths.theme) {
+        addPathThemeEl(paths.theme[i], i);
+      }
+    }
+
+    function addPathTheme (arg) {
+      paths.theme.push(arg);
+      addPathThemeEl(arg, paths.theme.length - 1);
+    }
+
+    function addPathThemeEl (p, i) {
+      const list = document.querySelector('#paths #theme');
+      const path = document.createElement('div');
+      path.classList += 'path-entry input';
+      path.id = `tp-${i}`;
+      path.innerHTML = p;
+      list.appendChild(path);
+
+      path.addEventListener('click', () => {
+        for (let i = 0; i < list.children.length; ++i) {
+          if (list.children[i].classList.contains('active')) {
+            list.children[i].classList.toggle('active');
+            break;
+          }
+        }
+        if (!path.classList.contains('active')) path.classList.toggle('active');
       });
     }
 
     function initThemes (arg) {
       themes = arg;
-
-      themes.forEach(t => {
-        const entry = document.createElement('div');
-        entry.className = 'theme-entry';
-        app.appendChild(entry);
-
-        const label = document.createElement('div')
-        label.className = 'label';
-        label.innerHTML = t.name;
-        entry.appendChild(label);
-
-        const btn = document.createElement('div');
-        btn.classList += 'btn btn-primary';
-        btn.innerHTML = 'Preview';
-        btn.addEventListener('click', () => {
-          ipcRenderer.send(`${appName}:themes:preview`, t);
+      addThemeGroup(-1);
+      addThemesEl({
+        name: 'default',
+        path: ''
+      }, -1);
+      const list = Object.keys(themes);
+      for (let i in paths.theme) {
+        addThemeGroup(i);
+        themes[paths.theme[i]].forEach(t => {
+          addThemesEl(t, i);
         });
-        entry.appendChild(btn);
+      }
+    }
+
+    function addThemes (p, t) {
+      themes[p] = t;
+      const index = paths.theme.length - 1;
+      addThemeGroup(index);
+      themes[p].forEach(t => {
+        addThemesEl(t, index);
       });
+    }
+
+    function addThemeGroup (i) {
+      const group = document.createElement('div');
+      group.className = 'theme-group';
+      group.id = `tg-${i}`;
+      views.themes.appendChild(group);
+    }
+
+    function addThemesEl (t, i) {
+      const group = document.querySelector(`#tg-${i}`);
+
+      const entry = document.createElement('div');
+      entry.className = 'theme-entry';
+      group.appendChild(entry);
+
+      const label = document.createElement('div')
+      label.className = 'label';
+      if (t.name === sddm.currentTheme) label.classList.add('current');
+      label.innerHTML = t.name;
+      entry.appendChild(label);
+
+      const path = document.createElement('div');
+      path.className = 'path';
+      path.innerHTML = t.path;
+      entry.appendChild(path);
+
+      const btnGroup = document.createElement('div');
+      btnGroup.className = 'btn-group';
+
+      const previewBtn = document.createElement('div');
+      previewBtn.classList += 'btn';
+      previewBtn.innerHTML = 'Preview';
+      previewBtn.addEventListener('click', () => {
+        ipcRenderer.send(`${appName}:themes:preview`, t);
+      });
+      btnGroup.appendChild(previewBtn);
+
+      /* const setBtn = document.createElement('div');
+      setBtn.classList += 'btn btn-secondary';
+      setBtn.innerHTML = 'Set Theme';
+      setBtn.addEventListener('click', () => {
+        ipcRenderer.send(`${appName}:themes:set`, t);
+      });
+      btnGroup.appendChild(setBtn); */
+
+      entry.appendChild(btnGroup);
+    }
+
+    function setConfig () {
+      ipcRenderer.send(`${appName}:paths:set-config`);
+    }
+
+    function addThemePath () {
+      ipcRenderer.send(`${appName}:paths:add-theme`);
+    }
+
+    function removeThemePath () {
+      const active = document.querySelector('.path-entry.active');
+      if (!active) return;
+      document.querySelector('#paths #theme').removeChild(active);
+      const index = Number(active.id.split('-')[1]);
+
+      paths.theme.splice(index, 1);
+
+      const remove = document.querySelector(`#tg-${index}`);
+      document.querySelector('#themes').removeChild(remove);
+
+      ipcRenderer.send(`${appName}:paths:remove-theme`, index);
     }
   </script>
 </html>
